@@ -1,0 +1,1044 @@
+!!ExportedWorkflow
+apiVersion: torq.io/v2alpha
+kind: Workflow
+id: 3f080828-ca64-4616-9f54-85b482c90707
+name: Workflow Promotion Interact Github
+trigger:
+  interaction:
+    finish_strategy: CONTINUE
+    flow_timeout: 24h
+    form_group:
+      logo_url: https://app.torq.io/images/logo/logo.svg
+      name: Interaction Flow
+      permissions:
+        allow_all_org_sso_users: true
+        allow_org_sso_users: true
+        allow_workspace_users: true
+      workflow_id: 80e57b0d-da9d-421a-913d-e9c9eaf394df
+    form_schema:
+      parameters:
+        - name: information
+          pretty_name: Information
+          select_display_mode: DROPDOWN_DISPLAY
+          type: MARKDOWN_TEXT
+          value: 'This workflow will walk through promoting a workflow to Production. '
+        - buttons:
+            - text: Next
+          name: user_action_button
+          type: BUTTONS
+    form_title: Promote to Prod
+    show_in_sidebar: true
+playbook:
+  steps:
+    - name: us-docker.pkg.dev/stackpulse/public/utils/output_utils/print:2.5.0
+      id: print_a_message_to_stdout
+      env:
+        FILE_OR_STRING: ""
+      uuid: 9a23cac6-61cd-401b-b765-96564b5ca5f7
+      pretty_name: Print a message to stdout
+      options:
+        executor:
+          name: utils_infrastructure_v_1_41_0
+          env: {}
+          sync: true
+          disable: false
+      manifestId: 819b7822-1397-51aa-acb7-de762fd86cab
+      isPrivate: false
+      isPrivateUrl: true
+      mock_output:
+        enabled: false
+      skip: false
+      retry: {}
+    - parallel:
+        uuid: 772547eb-cbbd-4385-ad27-256661f1089a
+        pretty_name: Parallel Executions
+        threads:
+          - uuid: 6f3c9f3c-626c-4f4c-a093-222f2ce6ce3c
+            steps:
+              - name: us-docker.pkg.dev/stackpulse/public/torq/list-workflows:2.1.0
+                id: list_workflows
+                env:
+                  PAGE_SIZE: "500"
+                envFrom:
+                  integrationRef: torq
+                uuid: 23bf3e54-fa17-4201-a102-5218062b4604
+                pretty_name: List Workflows
+                options:
+                  executor:
+                    name: http_request_v_4_21_0
+                    env: {}
+                    sync: true
+                    disable: false
+                documentationUrl: https://learn.torq.io/apidocs/list-workflows
+                manifestId: 7cf2de82-2ffa-551e-bd30-3b38030d3f24
+                isPrivate: false
+                isPrivateUrl: true
+                mock_output:
+                  enabled: false
+                skip: false
+                retry: {}
+              - name: us-docker.pkg.dev/stackpulse/public/jq/infra:3.24.0
+                id: formatted_workflow_list
+                env:
+                  __TQ_FILE_ENV_PARSER__INPUT: plain-text
+                  INPUT: '{{ $.list_workflows.api_object.workflows }}'
+                  JSON_QUERY: '[.[] | .name]'
+                uuid: 90a850da-894a-45bb-be98-193c9ace4116
+                pretty_name: Formatted Workflow List
+                options:
+                  executor:
+                    name: ""
+                    env: {}
+                    sync: false
+                    disable: false
+                documentationUrl: https://stedolan.github.io/jq/manual/#Basicfilters
+                manifestId: ddea3238-5a99-52f0-81b0-5ea8863bd3a1
+                isPrivate: false
+                isPrivateUrl: true
+                mock_output:
+                  enabled: false
+                skip: false
+                retry: {}
+          - uuid: 4a2b296f-25ee-41f4-85c4-3a9592ecbc1f
+            steps:
+              - name: us-docker.pkg.dev/stackpulse/public/jq/infra:3.24.0
+                id: formatted_workspace_list
+                env:
+                  __TQ_FILE_ENV_PARSER__INPUT: plain-text
+                  INPUT: '{{ $.workspace_variables.global_organization_table.workspaces }}'
+                  JSON_QUERY: '[.[] | .name]'
+                uuid: 4e0e670f-4668-4f59-9487-fe60f3fe4916
+                pretty_name: Formatted Workspace List
+                options:
+                  executor:
+                    name: ""
+                    env: {}
+                    sync: false
+                    disable: false
+                documentationUrl: https://stedolan.github.io/jq/manual/#Basicfilters
+                manifestId: ddea3238-5a99-52f0-81b0-5ea8863bd3a1
+                isPrivate: false
+                isPrivateUrl: true
+                mock_output:
+                  enabled: false
+                skip: false
+                retry: {}
+          - uuid: 8503fec7-2447-4fd9-9176-d55e1fd23088
+            steps:
+              - name: us-docker.pkg.dev/stackpulse/public/torq/list-tags:1.2.0
+                id: list_tags
+                envFrom:
+                  integrationRef: torq
+                uuid: fad82ac8-4f0a-4de5-baa9-255c1e81f919
+                pretty_name: List Tags
+                options:
+                  executor:
+                    name: http_request_v_4_21_0
+                    env: {}
+                    sync: true
+                    disable: false
+                documentationUrl: https://learn.torq.io/apidocs/list-tags
+                manifestId: d8286ff1-03a5-5e92-95d6-c5e0c026c4a6
+                isPrivate: false
+                mock_output:
+                  enabled: false
+                skip: false
+                retry: {}
+              - name: us-docker.pkg.dev/stackpulse/public/jq/infra:3.24.0
+                id: formatted_tag_list
+                env:
+                  __TQ_FILE_ENV_PARSER__INPUT: plain-text
+                  INPUT: '{{ $.list_tags.api_object.tags }}'
+                  JSON_QUERY: '[.[] | .name]'
+                uuid: da67998f-23c8-4532-b83c-75a6f31c19d7
+                pretty_name: Formatted Tag List
+                options:
+                  executor:
+                    name: ""
+                    env: {}
+                    sync: false
+                    disable: false
+                documentationUrl: https://stedolan.github.io/jq/manual/#Basicfilters
+                manifestId: ddea3238-5a99-52f0-81b0-5ea8863bd3a1
+                isPrivate: false
+                isPrivateUrl: true
+                mock_output:
+                  enabled: false
+                skip: false
+                retry: {}
+          - uuid: f0c83584-dfbc-46a8-a900-a95729cb7fd5
+            steps:
+              - name: us-docker.pkg.dev/stackpulse/public/torq/list-workspace-variables:1.2.0
+                id: list_workspace_variables
+                envFrom:
+                  integrationRef: torq
+                uuid: bfb2add5-933c-48bf-bb6c-e783ee8c9ee9
+                pretty_name: List workspace variables
+                options:
+                  executor:
+                    name: http_request_v_4_33_0
+                    env: {}
+                    sync: true
+                    disable: false
+                documentationUrl: https://developers.torq.io/apidocs/list-workspace-variables
+                manifestId: fc4a312f-a7f5-56e1-bcd4-bd91a8e09dc1
+                isPrivate: false
+                isPrivateUrl: true
+                mock_output:
+                  enabled: false
+                skip: false
+                retry: {}
+              - name: us-docker.pkg.dev/stackpulse/public/jq/infra:3.24.0
+                id: formatted_variable_list
+                env:
+                  __TQ_FILE_ENV_PARSER__INPUT: plain-text
+                  INPUT: '{{ $.list_workspace_variables.api_object.variables }}'
+                  JSON_QUERY: '[.[] | .name]'
+                uuid: 53b48398-576c-4df1-89e9-5dfe2cb1d02b
+                pretty_name: Formatted Variable List
+                options:
+                  executor:
+                    name: ""
+                    env: {}
+                    sync: false
+                    disable: false
+                documentationUrl: https://stedolan.github.io/jq/manual/#Basicfilters
+                manifestId: ddea3238-5a99-52f0-81b0-5ea8863bd3a1
+                isPrivate: false
+                isPrivateUrl: true
+                mock_output:
+                  enabled: false
+                skip: false
+                retry: {}
+    - name: us-docker.pkg.dev/stackpulse/public/interact/send_interaction:2.0.25
+      id: promotion_form
+      env:
+        CASE_ID: '{{ $.metadata.case.id }}'
+        FLOW_SETTINGS: '{"name":"Interaction Flow","openToOrgSso":false,"allowedToCancelExecution":false,"cancelExecutionWhenTimedOut":false,"logoUrl":"https://app.torq.io/images/logo/logo.svg","permissions":{"emails":[],"domains":[],"roles":[],"workspaceGroups":[],"allowWorkspaceUsers":true,"allowOrgSsoUsers":true,"allowAllOrgSsoUsers":true}}'
+        FORM_SCHEMA: "{ \"parameters\": [{\"name\":\"information\",\"type\":\"MARKDOWN_TEXT\",\"prettyName\":\"Information\",\"value\":\"### Select Your Options\\n\\nUse the dropdowns below to configure your resource promotion request.\\n\\n---\\n\\n### 1. Target Workspaces\\nSelect which workspace(s) will receive the submitted resources.\\n\\n- Choose one or multiple production workspaces\\n- Selected resources will be promoted to **all selected workspaces** upon approval\\n\\n---\\n\\n### 2. (Optional) Workflows to Submit\\nSelect which workflow(s) to promote.\\n\\n- Only **published workflows** from your development workspace are available\\n- You may submit **multiple workflows** in a single request\\n\\n---\\n\\n### 3. (Optional) Tags to Submit\\nSelect which workflow tag(s) to promote.\\n\\n- **All workflows** associated with the selected tag(s) will be submitted for approval\\n- Only **published workflows** from your development workspace are available\\n- You may submit **multiple tags** in a single request\\n\\n---\\n\\n### 4. (Optional) Variables to Submit\\nSelect which workspace variable(s) to promote.\\n\\n- Selected workspace variables will be submitted for approval\\n- You may submit **multiple variables** in a single request\\n- Any existing variables with the **same name in the target workspace will be overwritten**\\n\\n---\\n\\n### \U0001F4A1 Tips\\n\\n- ✅ Submit resources that are **fully tested and ready** for the target environment  \\n- ✅ Review dependencies and ensure **required integrations or configurations exist** in the target workspace(s)  \\n- ✅ Group **related resources together** to simplify approval and tracking  \\n- ✅ If you are unsure if all nested workflows are available in the **Target Workspace**, please use the provided switch to include them in the request \\n\\n---\\n\\nOnce you've made your selections, click **Submit for Approval** to send your request to reviewers.\",\"selectDisplayMode\":\"DROPDOWN_DISPLAY\"}, {\"name\":\"include_nested_workflows\",\"type\":\"BOOLEAN\",\"required\":true,\"prettyName\":\"Include Nested Workflows?\",\"value\":\"true\",\"allowMultipleFiles\":true,\"selectDisplayMode\":\"DROPDOWN_DISPLAY\"}, {\"name\":\"workflows_to_submit\",\"type\":\"MULTI_SELECT\",\"prettyName\":\"Workflows to Submit\",\"optionsList\":{{ $.formatted_workflow_list.output }},\"values\":{},\"allowMultipleFiles\":true,\"selectDisplayMode\":\"DROPDOWN_DISPLAY\"}, {\"name\":\"tags_to_submit\",\"type\":\"MULTI_SELECT\",\"prettyName\":\"Tags to Submit\",\"description\":\"Submit all workflows with the following tag(s) for approval.\",\"optionsList\":{{ $.formatted_tag_list.output }},\"selectDisplayMode\":\"DROPDOWN_DISPLAY\"}, {\"name\":\"variables_to_submit\",\"type\":\"MULTI_SELECT\",\"prettyName\":\"Variables to Submit\",\"description\":\"Workspace variable(s) to submit for approval.\",\"optionsList\":{{ $.formatted_variable_list.output }},\"values\":{},\"allowMultipleFiles\":true,\"selectDisplayMode\":\"DROPDOWN_DISPLAY\"}, {\"name\":\"workspaces\",\"type\":\"MULTI_SELECT\",\"required\":true,\"prettyName\":\"Target Workspaces\",\"optionsList\":{{ $.formatted_workspace_list.output }},\"values\":{},\"allowMultipleFiles\":true,\"selectDisplayMode\":\"DROPDOWN_DISPLAY\"}, {\"name\":\"user_action_button\",\"type\":\"BUTTONS\",\"buttons\":[{\"text\":\"Submit for Approval\"},{\"text\":\"Exit\"}]}]}"
+        FORM_TITLE: Promote to Prod
+        HAS_NEXT: "true"
+        TIMEOUT: 24h
+      uuid: 10b0a8b5-6f80-4359-add1-9d1e72b09288
+      pretty_name: Promotion Form
+      options:
+        executor:
+          name: ""
+          env: {}
+          sync: false
+          disable: false
+      manifestId: 13e67201-3e50-5885-bc97-0a05c18fcba7
+      isPrivate: false
+      mock_output:
+        enabled: false
+      skip: false
+      retry: {}
+    - if:
+        conditions:
+          or:
+            - and:
+                - lvalue: '{{ $.promotion_form.answers.user_action_button }}'
+                  operator: EQUALS
+                  rvalue: Submit for Approval
+        then:
+          - name: us-docker.pkg.dev/stackpulse/public/interact/update_loading_screen:5.1.2
+            id: update_loading_screen_2
+            env:
+              INTERACTION_FLOW: '{"name":"Interaction Flow","executionId":"{{ $.metadata.execution_id }}"}'
+              MARKDOWN_TEXT: '### Formatting request data...'
+            uuid: fe2ad397-bc53-4c2d-9a7b-ea911d97680f
+            pretty_name: Update Loading Screen 2
+            options:
+              executor:
+                name: ""
+                env: {}
+                sync: false
+                disable: false
+            manifestId: b2217a51-2dfd-52c9-9f35-c38381bb6898
+            isPrivate: false
+            mock_output:
+              enabled: false
+            skip: false
+            retry: {}
+          - parallel:
+              uuid: d3efdda8-5108-4edc-bc98-111a6203d98f
+              pretty_name: Parallel Executions
+              threads:
+                - uuid: 149f6cde-e3e9-4026-b77b-4689ede00d4f
+                  steps:
+                    - if:
+                        conditions:
+                          or:
+                            - and:
+                                - lvalue: '{{ $.promotion_form.answers.workflows_to_submit }}'
+                                  operator: NOT_EMPTY
+                                  rvalue: ""
+                        then:
+                          - name: us-docker.pkg.dev/stackpulse/public/utils/array_utils/array-filter:2.6.0
+                            id: format_workflow_request
+                            env:
+                              FIELD_PATH: name
+                              FILTER_ARG: '{{ $.promotion_form.answers.workflows_to_submit }}'
+                              FILTER_FUNC: Equals
+                              INPUT: '{{ $.list_workflows.api_object.workflows }}'
+                            uuid: 19932547-b899-498e-821f-5f17a0ac4dbf
+                            pretty_name: Format Workflow Request
+                            options:
+                              executor:
+                                name: utils_infrastructure_v_1_62_0
+                                env: {}
+                                sync: true
+                                disable: false
+                            documentationUrl: https://learn.torq.io/docs/array-utilities#filter-array
+                            manifestId: e9a65c7e-3efc-54af-a51c-e8b0f20c0b59
+                            isPrivate: false
+                            mock_output:
+                              enabled: false
+                            skip: false
+                            retry:
+                              type: 1
+                              max_retries: 3
+                              delay: 3
+                        else: []
+                        uuid: 861f874f-1c54-4cd7-992e-a637e1830912
+                        pretty_name: If Workflows
+                - uuid: 08890c73-2311-458a-908b-e7d32ae3080d
+                  steps:
+                    - if:
+                        conditions:
+                          or:
+                            - and:
+                                - lvalue: '{{ $.promotion_form.answers.tags_to_submit }}'
+                                  operator: NOT_EMPTY
+                                  rvalue: ""
+                        then:
+                          - name: us-docker.pkg.dev/stackpulse/public/jq/infra:3.24.0
+                            id: format_tag_filter
+                            env:
+                              __TQ_FILE_ENV_PARSER__INPUT: plain-text
+                              INPUT: '{{ $.promotion_form.answers.tags_to_submit }}'
+                              JSON_QUERY: '[.[] | {name: .}]'
+                            uuid: 327addd3-ef6f-4fde-be01-593413107882
+                            pretty_name: Format Tag Filter
+                            options:
+                              executor:
+                                name: ""
+                                env: {}
+                                sync: false
+                                disable: false
+                            documentationUrl: https://stedolan.github.io/jq/manual/#Basicfilters
+                            manifestId: ddea3238-5a99-52f0-81b0-5ea8863bd3a1
+                            isPrivate: false
+                            isPrivateUrl: true
+                            mock_output:
+                              enabled: false
+                            skip: false
+                            retry: {}
+                          - name: us-docker.pkg.dev/stackpulse/public/torq/list-workflows:2.1.0
+                            id: list_workflows_by_tag
+                            env:
+                              PAGE_SIZE: "500"
+                              TAGS: '{{ $.format_tag_filter.output }}'
+                            envFrom:
+                              integrationRef: torq
+                            uuid: 95d4325f-2ce0-4315-9ce0-7687c874d7b2
+                            pretty_name: List Workflows By Tag
+                            options:
+                              executor:
+                                name: http_request_v_4_21_0
+                                env: {}
+                                sync: true
+                                disable: false
+                            documentationUrl: https://learn.torq.io/apidocs/list-workflows
+                            manifestId: 7cf2de82-2ffa-551e-bd30-3b38030d3f24
+                            isPrivate: false
+                            isPrivateUrl: true
+                            mock_output:
+                              enabled: false
+                            skip: false
+                            retry: {}
+                        else: []
+                        uuid: c85957db-527a-48a1-adab-35c4f1bead55
+                        pretty_name: If Tags
+                - uuid: eb7b1f2b-cc9a-491a-b774-9199ccbdd7a3
+                  steps:
+                    - if:
+                        conditions:
+                          or:
+                            - and:
+                                - lvalue: '{{ $.promotion_form.answers.variables_to_submit }}'
+                                  operator: NOT_EMPTY
+                                  rvalue: ""
+                        then:
+                          - name: us-docker.pkg.dev/stackpulse/public/utils/array_utils/array-filter:2.6.0
+                            id: format_variable_request
+                            env:
+                              FIELD_PATH: name
+                              FILTER_ARG: '{{ $.promotion_form.answers.variables_to_submit }}'
+                              FILTER_FUNC: Equals
+                              INPUT: '{{ $.list_workspace_variables.api_object.variables }}'
+                            uuid: 94548c74-8d77-42e8-8536-c636288d79d8
+                            pretty_name: Format Variable Request
+                            options:
+                              executor:
+                                name: utils_infrastructure_v_1_62_0
+                                env: {}
+                                sync: true
+                                disable: false
+                            documentationUrl: https://learn.torq.io/docs/array-utilities#filter-array
+                            manifestId: e9a65c7e-3efc-54af-a51c-e8b0f20c0b59
+                            isPrivate: false
+                            mock_output:
+                              enabled: false
+                            skip: false
+                            retry:
+                              type: 1
+                              max_retries: 3
+                              delay: 3
+                        else: []
+                        uuid: a395ef83-d17b-4b75-a718-b63b658554ca
+                        pretty_name: If Workspace Variables
+          - name: us-docker.pkg.dev/stackpulse/public/utils/array_utils/concat-arrays:1.3.0
+            id: concat_arrays
+            env:
+              INPUT: '{{ if $.format_workflow_request.result }}{{ $.format_workflow_request.result }}{{else}}[]{{end}}'
+              SECOND_ARRAY: '{{ if $.list_workflows_by_tag.api_object.workflows }}{{ $.list_workflows_by_tag.api_object.workflows }}{{else}}[]{{end}}'
+            uuid: 8dc51e51-b9c0-451a-b3cd-0ea63608de10
+            pretty_name: Concat Arrays
+            options:
+              executor:
+                name: utils_infrastructure_v_1_41_0
+                env: {}
+                sync: true
+                disable: false
+            documentationUrl: https://learn.torq.io/docs/array-utilities#concat-arrays
+            manifestId: 0692cd25-0cfd-56a9-8ac1-554606132dbf
+            isPrivate: false
+            mock_output:
+              enabled: false
+            skip: false
+            retry: {}
+          - loop:
+              in: '{{ $.concat_arrays.result }}'
+              key: loop_2_key
+              value: loop_2_value
+              steps:
+                - name: us-docker.pkg.dev/stackpulse/public/scripting/python:3.8.0
+                  id: build_dependency_tree
+                  env:
+                    PYTHON_CODE: |-
+                      import json
+                      import re
+                      import requests
+                      import sys
+
+                      # ── Configuration ────────────────────────────────────────────────────
+                      API_TOKEN = r'''{{ $.integrations.torq.access_token }}'''
+                      API_BASE = "https://api.torq.io/public/v1alpha"
+                      ROOT_WF_ID = r'''{{ $.loop_2_value.id }}'''
+                      ROOT_REV_ID = r'''{{ $.loop_2_value.current_revision_id }}'''
+                      ROOT_META_RAW = r'''{{ $.loop_2_value | toJson }}'''
+
+                      HEADERS = {
+                          "Authorization": f"Bearer {API_TOKEN}",
+                          "Content-Type": "application/json",
+                      }
+                      MAX_DEPTH = 20  # safety limit to prevent runaway recursion
+
+                      # ── API helper functions ─────────────────────────────────────────────
+
+                      def get_workflow(workflow_id):
+                          """Retrieve workflow metadata (name, current_revision_id, etc.)."""
+                          url = f"{API_BASE}/workflows/{workflow_id}"
+                          try:
+                              resp = requests.get(url, headers=HEADERS, timeout=30)
+                              resp.raise_for_status()
+                              return resp.json()
+                          except Exception as e:
+                              print(f"WARN: Failed to get workflow {workflow_id}: {e}", file=sys.stderr)
+                              return None
+
+
+                      def get_revision_yaml(workflow_id, revision_id):
+                          """Retrieve the YAML content of a specific workflow revision."""
+                          url = f"{API_BASE}/workflows/{workflow_id}/revision/{revision_id}"
+                          try:
+                              resp = requests.get(url, headers=HEADERS, timeout=30)
+                              resp.raise_for_status()
+                              data = resp.json()
+                              return data.get("yaml", "")
+                          except Exception as e:
+                              print(f"WARN: Failed to get revision {revision_id} for {workflow_id}: {e}",
+                                    file=sys.stderr)
+                              return ""
+
+
+                      def extract_nested_ids(yaml_text):
+                          """Extract unique playbook_id UUIDs from workflow YAML."""
+                          return list(set(re.findall(r'playbook_id:\s*([a-f0-9-]{36})', yaml_text)))
+
+
+                      # ── Recursive tree builder ───────────────────────────────────────────
+
+                      def build_tree(workflow_id, revision_id, depth=0, visited=None):
+                          """Recursively build the dependency tree for a workflow."""
+                          if visited is None:
+                              visited = set()
+
+                          # Circular dependency check
+                          if workflow_id in visited:
+                              return {
+                                  "workflow_name": "CIRCULAR REFERENCE",
+                                  "workflow_id": workflow_id,
+                                  "revision_id": revision_id or "N/A",
+                                  "level": depth,
+                                  "circular_reference": True,
+                                  "nested_workflows": [],
+                              }
+
+                          # Depth safety check
+                          if depth > MAX_DEPTH:
+                              return {
+                                  "workflow_name": "MAX DEPTH EXCEEDED",
+                                  "workflow_id": workflow_id,
+                                  "revision_id": revision_id or "N/A",
+                                  "level": depth,
+                                  "max_depth_exceeded": True,
+                                  "nested_workflows": [],
+                              }
+
+                          visited.add(workflow_id)
+
+                          # Get workflow metadata
+                          wf_data = get_workflow(workflow_id)
+                          if wf_data is None:
+                              return {
+                                  "workflow_name": "UNKNOWN (API call failed)",
+                                  "workflow_id": workflow_id,
+                                  "revision_id": revision_id or "N/A",
+                                  "level": depth,
+                                  "nested_workflows": [],
+                              }
+
+                          wf_name = wf_data.get("name", "Unknown")
+                          current_rev = wf_data.get("current_revision_id", revision_id or "N/A")
+
+                          # Use provided revision_id if available, otherwise use current
+                          rev_to_fetch = revision_id if revision_id else current_rev
+
+                          # Get the YAML for this revision
+                          yaml_text = get_revision_yaml(workflow_id, rev_to_fetch)
+
+                          # Extract nested workflow IDs from the YAML
+                          child_ids = extract_nested_ids(yaml_text)
+
+                          # Build the node
+                          node = {
+                              "workflow_name": wf_name,
+                              "workflow_id": workflow_id,
+                              "revision_id": rev_to_fetch,
+                              "level": depth,
+                              "nested_workflows": [],
+                          }
+
+                          # Recurse into each child workflow
+                          for child_id in sorted(child_ids):
+                              child_node = build_tree(
+                                  workflow_id=child_id,
+                                  revision_id=None,  # will use current_revision_id
+                                  depth=depth + 1,
+                                  visited=visited.copy(),
+                              )
+                              node["nested_workflows"].append(child_node)
+
+                          return node
+
+
+                      # ── Main execution ───────────────────────────────────────────────────
+
+                      root_meta = json.loads(ROOT_META_RAW)
+                      tree = build_tree(ROOT_WF_ID, ROOT_REV_ID)
+
+                      # Collect all unique workflow IDs found in the tree
+                      def collect_ids(node):
+                          ids = [node["workflow_id"]]
+                          for child in node.get("nested_workflows", []):
+                              ids.extend(collect_ids(child))
+                          return ids
+
+                      all_ids = list(set(collect_ids(tree)))
+
+                      output = {
+                          "dependency_tree": tree,
+                          "summary": {
+                              "total_workflows_found": len(all_ids),
+                              "root_workflow": root_meta.get("name", "Unknown"),
+                              "all_workflow_ids": sorted(all_ids),
+                          },
+                      }
+
+                      result = json.dumps(output, indent=2)
+                      print(result)
+                  uuid: 1e55673a-949b-4d1c-ad2a-382a1f195c69
+                  pretty_name: Build Dependency Tree
+                  options:
+                    executor:
+                      name: ""
+                      env: {}
+                      sync: true
+                      disable: false
+                  icon: https://storage.googleapis.com/stackpulse-public/vendors/python.svg
+                  manifestId: a1c8a0a5-879b-5e79-96bd-159a9d5bbfa8
+                  isPrivate: false
+                  isPrivateUrl: true
+                  mock_output:
+                    enabled: false
+                  skip: false
+                  retry: {}
+                - if:
+                    conditions:
+                      or:
+                        - and:
+                            - lvalue: '{{ $.build_dependency_tree.summary.total_workflows_found }}'
+                              operator: GREATER
+                              rvalue: "1"
+                    then: []
+                    else: []
+                    uuid: 430ce35f-6160-4574-8c82-1b10a7c936e9
+                    pretty_name: If
+              uuid: 1895cc2a-525f-4863-8441-7f538df107b4
+              pretty_name: Loop 2
+          - name: us-docker.pkg.dev/stackpulse/public/interact/update_loading_screen:5.1.2
+            id: update_loading_screen
+            env:
+              INTERACTION_FLOW: '{"name":"Interaction Flow","executionId":"{{ $.metadata.execution_id }}"}'
+              MARKDOWN_TEXT: '### Submitting request...'
+            uuid: a972a682-4c10-4fda-873a-81416b19f161
+            pretty_name: Update Loading Screen
+            options:
+              executor:
+                name: ""
+                env: {}
+                sync: false
+                disable: false
+            manifestId: b2217a51-2dfd-52c9-9f35-c38381bb6898
+            isPrivate: false
+            mock_output:
+              enabled: false
+            skip: false
+            retry: {}
+          - name: us-docker.pkg.dev/stackpulse/public/utils/parameters_utils/workflow_parameters:1.3.0
+            id: workflow_parameters
+            env:
+              SCHEMA: |-
+                {
+                    "github_repo_owner": {
+                        "type": 8,
+                        "prettyName": "Github Repo Owner",
+                        "description": "",
+                        "uiPlaceholder": ""
+                    },
+                    "github_repo_name": {
+                        "type": 8,
+                        "prettyName": "Github Repo Name",
+                        "description": "",
+                        "uiPlaceholder": ""
+                    },
+                    "github_branch_name": {
+                        "type": 8,
+                        "prettyName": "Github Branch Name",
+                        "description": "",
+                        "uiPlaceholder": ""
+                    }
+                }
+              VALUES: |-
+                {
+                  "github_repo_owner": "creimer-torqio",
+                  "github_repo_name": "Workflow_CI-CD",
+                  "github_branch_name": "dev"
+                }
+            uuid: 5f90603e-5709-445b-90d7-06ae774150ad
+            pretty_name: Workflow Parameters
+            options:
+              executor:
+                name: utils_workflow_parameters_v_1_3_0
+                env: {}
+                sync: true
+                disable: false
+            manifestId: 30ebccc8-0ce8-5f13-960d-bc03b0179f53
+            isPrivate: false
+            mock_output:
+              enabled: false
+            skip: false
+            retry: {}
+          - if:
+              conditions:
+                or:
+                  - and:
+                      - lvalue: '{{ $.concat_arrays.result }}'
+                        operator: NOT_EMPTY
+                        rvalue: ""
+              then:
+                - name: us-docker.pkg.dev/stackpulse/public/http/request:4.33.0
+                  id: get_branch_details
+                  env:
+                    AUTHORIZATION: Bearer
+                    HEADERS: ""
+                    METHOD: GET
+                    TOKEN: '{{ $.integrations.github_torqcraigrdev.access_token }}'
+                    URL: https://api.github.com/repos/{{ $.workflow_parameters.github_repo_owner }}/{{ $.workflow_parameters.github_repo_name }}/git/refs/heads/{{ $.workflow_parameters.github_branch_name }}
+                  uuid: 6edc1fd5-8432-40b5-81a3-8089e5bebc85
+                  pretty_name: Get Branch Details
+                  options:
+                    executor:
+                      name: http_request_v_4_35_0
+                      env: {}
+                      sync: true
+                      disable: false
+                  manifestId: 7a86e1b9-edf7-5a09-a8be-149d431a01ee
+                  isPrivate: false
+                  isPrivateUrl: true
+                  mock_output:
+                    enabled: false
+                  skip: false
+                  retry: {}
+                - if:
+                    conditions:
+                      or:
+                        - and:
+                            - lvalue: '{{ $.get_branch_details.status_code }}'
+                              operator: NOT_EQUALS
+                              rvalue: "200"
+                    then:
+                      - name: us-docker.pkg.dev/stackpulse/public/http/request:4.33.0
+                        id: get_branch_main
+                        env:
+                          AUTHORIZATION: Bearer
+                          HEADERS: ""
+                          METHOD: GET
+                          TOKEN: '{{ $.integrations.github_torqcraigrdev.access_token }}'
+                          URL: https://api.github.com/repos/{{ $.workflow_parameters.github_repo_owner }}/{{ $.workflow_parameters.github_repo_name }}/git/refs/heads/main
+                        uuid: 7e1fbb18-b2f4-48c5-9bf5-a3d6694a2fd5
+                        pretty_name: Get Branch main
+                        options:
+                          executor:
+                            name: http_request_v_4_35_0
+                            env: {}
+                            sync: true
+                            disable: false
+                        manifestId: 7a86e1b9-edf7-5a09-a8be-149d431a01ee
+                        isPrivate: false
+                        isPrivateUrl: true
+                        mock_output:
+                          enabled: false
+                        skip: false
+                        retry: {}
+                      - name: us-docker.pkg.dev/stackpulse/public/http/request:4.33.0
+                        id: create_branch
+                        env:
+                          AUTHORIZATION: Bearer
+                          BODY: |-
+                            {
+                              "ref": "refs/heads/{{ $.workflow_parameters.github_branch_name }}",
+                              "sha": "{{ $.get_branch_main.api_object.object.sha }}"
+                            }
+                          CONTENT_TYPE: application/json; charset=utf-8
+                          HEADERS: ""
+                          METHOD: POST
+                          TOKEN: '{{ $.integrations.github_torqcraigrdev.access_token }}'
+                          URL: https://api.github.com/repos/{{ $.workflow_parameters.github_repo_owner }}/{{ $.workflow_parameters.github_repo_name }}/git/refs
+                        uuid: d73bd7b8-6446-489d-8f3d-117c8593a392
+                        pretty_name: Create Branch
+                        options:
+                          executor:
+                            name: http_request_v_4_35_0
+                            env: {}
+                            sync: true
+                            disable: false
+                        manifestId: 7a86e1b9-edf7-5a09-a8be-149d431a01ee
+                        isPrivate: false
+                        isPrivateUrl: true
+                        mock_output:
+                          enabled: false
+                        skip: false
+                        retry: {}
+                    else: []
+                    uuid: abf3e2ec-9145-4432-acb1-da7e8b5fe1f3
+                    pretty_name: If Branch does not exist
+                - loop:
+                    in: '{{ $.concat_arrays.result }}'
+                    key: loop_key
+                    value: loop_value
+                    steps:
+                      - name: us-docker.pkg.dev/stackpulse/public/torq/retrieve-a-revision:2.2.0
+                        id: retrieve_a_revision
+                        env:
+                          REVISION_ID: '{{ $.loop_value.current_revision_id}}'
+                          WORKFLOW_ID: '{{ $.loop_value.id }}'
+                        envFrom:
+                          integrationRef: torq
+                        uuid: dcc6ad4b-6f4d-4313-bf14-beda351815b8
+                        pretty_name: Retrieve a revision
+                        options:
+                          executor:
+                            name: http_request_v_4_21_0
+                            env: {}
+                            sync: true
+                            disable: false
+                        documentationUrl: https://learn.torq.io/apidocs/retrieve-a-revision
+                        manifestId: 77d35a55-ad4d-5734-9c06-94c2b7fdf0dc
+                        isPrivate: false
+                        isPrivateUrl: true
+                        mock_output:
+                          enabled: false
+                        skip: false
+                        retry: {}
+                      - name: us-docker.pkg.dev/stackpulse/public/utils/output_utils/set-variable:2.3.0
+                        id: set_filename
+                        env:
+                          DATA_TYPE: string
+                          VALUE_STRING: '{{ $.loop_value.name }}.yaml'
+                          VARIABLE_NAME: filename
+                        uuid: dc409795-e62c-4601-85c0-196d886cd9d0
+                        pretty_name: Set Filename
+                        options:
+                          executor:
+                            name: utils_infrastructure_v_1_41_0
+                            env: {}
+                            sync: true
+                            disable: false
+                        manifestId: 7b868a61-a5f1-53a3-ad5a-7c115d591b2e
+                        isPrivate: false
+                        mock_output:
+                          enabled: false
+                        skip: false
+                        retry: {}
+                      - name: us-docker.pkg.dev/stackpulse/public/http/request:4.33.0
+                        id: get_existing_file
+                        env:
+                          AUTHORIZATION: Bearer
+                          HEADERS: ""
+                          METHOD: GET
+                          TOKEN: '{{ $.integrations.github_torqcraigrdev.access_token }}'
+                          URL: https://api.github.com/repos/{{ $.workflow_parameters.github_repo_owner }}/{{ $.workflow_parameters.github_repo_name }}/contents/workflows/{{ $.set_filename.filename }}?ref={{ $.workflow_parameters.github_branch_name }}
+                        uuid: 34d8089e-fb9b-454c-96cf-89bf72fbf668
+                        pretty_name: Get Existing File
+                        options:
+                          executor:
+                            name: http_request_v_4_35_0
+                            env: {}
+                            sync: true
+                            disable: false
+                        manifestId: 7a86e1b9-edf7-5a09-a8be-149d431a01ee
+                        isPrivate: false
+                        isPrivateUrl: true
+                        mock_output:
+                          enabled: false
+                        skip: false
+                        retry: {}
+                      - if:
+                          conditions:
+                            or:
+                              - and:
+                                  - lvalue: '{{ $.get_existing_file.api_object.status }}'
+                                    operator: EQUALS
+                                    rvalue: "404"
+                          then:
+                            - name: us-docker.pkg.dev/stackpulse/public/http/request:4.33.0
+                              id: put_file
+                              env:
+                                AUTHORIZATION: Bearer
+                                BODY: |-
+                                  {
+                                    "message": "Adding workflow: {{ $.loop_value.name }}",
+                                    "content": "{{ b64enc $.retrieve_a_revision.api_object.yaml }}",
+                                    "branch": "{{ $.workflow_parameters.github_branch_name }}"
+                                  }
+                                CONTENT_TYPE: application/json; charset=utf-8
+                                HEADERS: ""
+                                METHOD: PUT
+                                TOKEN: '{{ $.integrations.github_torqcraigrdev.access_token }}'
+                                URL: https://api.github.com/repos/{{ $.workflow_parameters.github_repo_owner }}/{{ $.workflow_parameters.github_repo_name }}/contents/workflows/{{ $.set_filename.filename }}
+                              uuid: ff4048de-8dcc-4739-a708-3f3fb1d82b30
+                              pretty_name: Put File
+                              options:
+                                executor:
+                                  name: http_request_v_4_35_0
+                                  env: {}
+                                  sync: true
+                                  disable: false
+                              manifestId: 7a86e1b9-edf7-5a09-a8be-149d431a01ee
+                              isPrivate: false
+                              isPrivateUrl: true
+                              mock_output:
+                                enabled: false
+                              skip: false
+                              retry: {}
+                          else:
+                            - name: us-docker.pkg.dev/stackpulse/public/http/request:4.33.0
+                              id: update_file
+                              env:
+                                AUTHORIZATION: Bearer
+                                BODY: |-
+                                  {
+                                    "message": "Update Workflow: {{ $.loop_value.name }}",
+                                    "content": "{{ b64enc $.retrieve_a_revision.api_object.yaml }}",
+                                    "branch": "{{ $.workflow_parameters.github_branch_name }}",
+                                    "sha": "{{ $.get_existing_file.api_object.sha }}"
+                                  }
+                                CONTENT_TYPE: application/json; charset=utf-8
+                                HEADERS: ""
+                                METHOD: PUT
+                                TOKEN: '{{ $.integrations.github_torqcraigrdev.access_token }}'
+                                URL: https://api.github.com/repos/{{ $.workflow_parameters.github_repo_owner }}/{{ $.workflow_parameters.github_repo_name }}/contents/workflows/{{ $.set_filename.filename }}
+                              uuid: d810605e-3e96-4c4c-9a76-eaf9401cfb6d
+                              pretty_name: Update File
+                              options:
+                                executor:
+                                  name: http_request_v_4_35_0
+                                  env: {}
+                                  sync: true
+                                  disable: false
+                              manifestId: 7a86e1b9-edf7-5a09-a8be-149d431a01ee
+                              isPrivate: false
+                              isPrivateUrl: true
+                              mock_output:
+                                enabled: false
+                              skip: false
+                              retry: {}
+                          uuid: 0eccf4fc-93b1-45bd-abff-896f05c4657b
+                          pretty_name: If File does not exist
+                    uuid: bd51fc55-fccb-4664-ad96-08152233f0f6
+                    pretty_name: Loop Workflows
+                - name: us-docker.pkg.dev/stackpulse/public/utils/date_and_time_utils/get-date:4.4.1
+                  id: get_date
+                  env:
+                    DATE: ""
+                    DATE_FORMAT_LAYOUT: 2006-01-02T15:04:05Z07:00
+                    TIME_AGO: ""
+                  uuid: 98d254a5-7367-4b5b-ae8b-6bb110f10375
+                  pretty_name: Get Date
+                  options:
+                    executor:
+                      name: utils_infrastructure_v_1_48_0
+                      env: {}
+                      sync: true
+                      disable: false
+                  documentationUrl: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+                  manifestId: 69776185-df46-50b5-8136-f6d19c46b59b
+                  isPrivate: false
+                  mock_output:
+                    enabled: false
+                  skip: false
+                  retry: {}
+                - name: us-docker.pkg.dev/stackpulse/public/http/request:4.33.0
+                  id: create_pull_request
+                  env:
+                    AUTHORIZATION: Bearer
+                    BODY: |-
+                      {
+                        "title": "Dev to Prod promotion {{ $.get_date.result }}",
+                        "body": "Merge new workflows with current producation",
+                        "head": "{{ $.workflow_parameters.github_branch_name }}",
+                        "base": "main"
+                      }
+                    CONTENT_TYPE: application/json; charset=utf-8
+                    HEADERS: ""
+                    METHOD: POST
+                    TOKEN: '{{ $.integrations.github_torqcraigrdev.access_token }}'
+                    URL: https://api.github.com/repos/{{ $.workflow_parameters.github_repo_owner }}/{{ $.workflow_parameters.github_repo_name }}/pulls
+                  uuid: e534609b-8f09-4173-ae05-d5210ea570cc
+                  pretty_name: Create Pull Request
+                  options:
+                    executor:
+                      name: http_request_v_4_35_0
+                      env: {}
+                      sync: true
+                      disable: false
+                  manifestId: 7a86e1b9-edf7-5a09-a8be-149d431a01ee
+                  isPrivate: false
+                  isPrivateUrl: true
+                  mock_output:
+                    enabled: false
+                  skip: false
+                  retry: {}
+              else: []
+              uuid: 374cddc7-6df3-45e6-ab26-236451d00160
+              pretty_name: If
+          - switch:
+              uuid: 24669bca-fbcb-46a1-b993-cb6b418d874f
+              pretty_name: Switch
+              cases:
+                - id: 4ef5b67d-ca0f-41c8-9d8e-3be24f3bca3b
+                  pretty_name: request_submitted
+                  conditions:
+                    or:
+                      - and:
+                          - lvalue: '{{ $.create_pull_request.status_code }}'
+                            operator: EQUALS
+                            rvalue: "201"
+                  steps:
+                    - name: us-docker.pkg.dev/stackpulse/public/interact/send_interaction:2.0.25
+                      id: interaction_submitted
+                      env:
+                        CASE_ID: '{{ $.metadata.case.id }}'
+                        FLOW_SETTINGS: '{"name":"Interaction Flow","openToOrgSso":false,"allowedToCancelExecution":false,"cancelExecutionWhenTimedOut":false,"logoUrl":"https://app.torq.io/images/logo/logo.svg","permissions":{"emails":[],"domains":[],"roles":[],"workspaceGroups":[],"allowWorkspaceUsers":true,"allowOrgSsoUsers":true,"allowAllOrgSsoUsers":true}}'
+                        FORM_SCHEMA: '{ "parameters": [{"name":"parameter_1","type":"MARKDOWN_TEXT","prettyName":"Parameter 1","value":"## ✅ Submission Successful\n\nYour workflow promotion request has been successfully submitted!\n\n**Pull Request ID:** `{{ jsonEscape $.create_pull_request.api_object.number }}`\n\n### What happens next:\n\n1. **Pull Request sent** - Pull Request should now appear in designated Repository\n2. **Wait for approval** - Reviewers will evaluate your request and merge\n3. **Automatic promotion** - Approved workflows will be promoted to target workspaces","allowMultipleFiles":true,"selectDisplayMode":"DROPDOWN_DISPLAY"}, {"name":"user_action_button","type":"BUTTONS","buttons":[{"text":"Exit"}]}]}'
+                        FORM_TITLE: Complete
+                        HAS_NEXT: "false"
+                        TIMEOUT: 24h
+                      uuid: 5f3b04bb-7c33-42f4-b681-2ab521f088bc
+                      pretty_name: Interaction - Submitted
+                      options:
+                        executor:
+                          name: ""
+                          env: {}
+                          sync: false
+                          disable: false
+                      manifestId: 13e67201-3e50-5885-bc97-0a05c18fcba7
+                      isPrivate: false
+                      mock_output:
+                        enabled: false
+                      skip: false
+                      retry: {}
+                - id: d1661840-2795-499f-ae4a-72a582240407
+                  pretty_name: request_failed
+                  conditions:
+                    or:
+                      - and:
+                          - lvalue: '{{ $.create_pull_request.status_code }}'
+                            operator: NOT_EQUALS
+                            rvalue: "200"
+                  steps:
+                    - name: us-docker.pkg.dev/stackpulse/public/interact/send_interaction:2.0.25
+                      id: interaction_failed
+                      env:
+                        CASE_ID: '{{ $.metadata.case.id }}'
+                        FLOW_SETTINGS: '{"name":"Interaction Flow","openToOrgSso":false,"allowedToCancelExecution":false,"cancelExecutionWhenTimedOut":false,"logoUrl":"https://app.torq.io/images/logo/logo.svg","permissions":{"emails":[],"domains":[],"roles":[],"workspaceGroups":[],"allowWorkspaceUsers":true,"allowOrgSsoUsers":true,"allowAllOrgSsoUsers":true}}'
+                        FORM_SCHEMA: '{ "parameters": [{"name":"parameter_1","type":"MARKDOWN_TEXT","prettyName":"Parameter 1","value":"## ❌ Submission Failed\n\nWe encountered an error while submitting your workflow promotion request.\n\n### Error Details:\n\n**Message:** {{ jsonEscape $.create_pull_request.api_object.message }}\n\n### What to do next:\n\n1. **Verify selections** - Ensure you''ve selected both target workspaces and workflows\n2. **Check permissions** - Confirm you have access to submit workflows\n3. **Review workflows** - Make sure all selected workflows are published in your development workspace\n4. **Try again** - Click the submit button to retry your request\n\n### Still having issues?\n\n- Check that your workflows don''t have any validation errors\n- Ensure target workspaces exist and you have access to them\n- Contact your workspace administrator if the problem persists","allowMultipleFiles":true,"selectDisplayMode":"DROPDOWN_DISPLAY"}, {"name":"user_action_button","type":"BUTTONS","buttons":[{"text":"Exit"}]}]}'
+                        FORM_TITLE: Request Failed to Submit
+                        HAS_NEXT: "false"
+                        TIMEOUT: 24h
+                      uuid: e54329a1-42d6-4e8d-b62c-12d88564f0ff
+                      pretty_name: Interaction - Failed
+                      options:
+                        executor:
+                          name: ""
+                          env: {}
+                          sync: false
+                          disable: false
+                      manifestId: 13e67201-3e50-5885-bc97-0a05c18fcba7
+                      isPrivate: false
+                      mock_output:
+                        enabled: false
+                      skip: false
+                      retry: {}
+              default:
+                id: d86ed148-edef-4eda-a8d7-1da6f652a7f2
+                steps: []
+        else: []
+        uuid: 5a98a056-1c98-4209-93c5-bd06afa681f0
+        pretty_name: If Submit for Approval
+  output_schema: '{}'
+  section: Workflow to Prod Pipeline
+root: true
