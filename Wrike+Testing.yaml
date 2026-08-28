@@ -1,0 +1,110 @@
+!!ExportedWorkflow
+apiVersion: torq.io/v2alpha
+kind: Workflow
+id: df73a26f-226a-4f19-ba0d-c86935e68149
+name: Wrike Testing
+trigger:
+  onDemandTrigger:
+    parameterList:
+      parameters: []
+playbook:
+  steps:
+    - name: us-docker.pkg.dev/stackpulse/public/http/request:4.19.0
+      id: get_ids
+      env:
+        AUTHORIZATION: Bearer
+        HEADERS: '{}'
+        METHOD: GET
+        TOKEN: '{{ $.integrations.torq_car_dev.client_secret }}'
+        URL: https://www.wrike.com/api/v4/contacts
+      uuid: fc5c848c-a1e1-441c-a1fe-8d3fdba9ab1d
+      pretty_name: Get IDs
+      options:
+        executor:
+          name: http_request_v_4_19_0
+          env:
+            FAIL_ON_NON_SUCCESS_RESPONSE: "false"
+            GO_TEMPLATE_BODY_PARSING: "false"
+            RESPONSE_API_OBJECT_ONLY: "false"
+          sync: true
+          disable: false
+      manifestId: b474a50b-1d38-598b-9fff-241bb44dd064
+      isPrivate: false
+      isPrivateUrl: true
+      mock_output:
+        enabled: false
+      skip: false
+      retry: {}
+    - name: us-docker.pkg.dev/stackpulse/public/jq/infra:3.17.0
+      id: run_jq_command
+      env:
+        INPUT: '{{ $.get_ids.api_object.data }}'
+        JSON_QUERY: .[] | select(.firstName == "Craig" and .lastName == "Reimer")
+      uuid: af70c821-f1a6-4646-9ed1-5778434c6911
+      pretty_name: Run jq Command
+      options:
+        executor:
+          name: jq_infra_v_3_17_0
+          env:
+            COMMAND: jq_command
+          sync: true
+          disable: false
+      documentationUrl: https://stedolan.github.io/jq/manual/#Basicfilters
+      manifestId: 2fe0143c-62bd-53fc-8979-f7c70e125fe3
+      isPrivate: false
+      isPrivateUrl: true
+      mock_output:
+        enabled: false
+      skip: false
+      retry: {}
+    - name: us-docker.pkg.dev/stackpulse/public/http/request:4.19.0
+      id: get_tasks
+      env:
+        AUTHORIZATION: Bearer
+        HEADERS: '{}'
+        METHOD: GET
+        TOKEN: '{{ $.integrations.torq_car_dev.client_secret }}'
+        URL: https://www.wrike.com/api/v4/tasks?fields=["customItemTypeId","parentIds","description","recurrent","sharedIds","superTaskIds","superParentIds","hasAttachments","metadata","attachmentCount","dependencyIds","subTaskIds","authorIds","responsibleIds","briefDescription","customFields"]
+      uuid: 6c11b86a-3731-43ab-9039-eaf16ccf9a8e
+      pretty_name: Get Tasks
+      options:
+        executor:
+          name: http_request_v_4_19_0
+          env:
+            FAIL_ON_NON_SUCCESS_RESPONSE: "false"
+            GO_TEMPLATE_BODY_PARSING: "false"
+            RESPONSE_API_OBJECT_ONLY: "false"
+          sync: true
+          disable: false
+      manifestId: b474a50b-1d38-598b-9fff-241bb44dd064
+      isPrivate: false
+      isPrivateUrl: true
+      mock_output:
+        enabled: false
+      skip: false
+      retry: {}
+    - name: us-docker.pkg.dev/stackpulse/public/jq/infra:3.17.0
+      id: run_jq_command_1
+      env:
+        INPUT: '{{ $.get_tasks.api_object.data }}'
+        JSON_QUERY: .[] | select(.responsibleIds.[] == "{{ $.run_jq_command.output.id }}")
+      uuid: ed283a36-7a49-4473-b82b-29722bacbd36
+      pretty_name: Run jq Command 1
+      options:
+        executor:
+          name: jq_infra_v_3_17_0
+          env:
+            COMMAND: jq_command
+          sync: true
+          disable: false
+      documentationUrl: https://stedolan.github.io/jq/manual/#Basicfilters
+      manifestId: 2fe0143c-62bd-53fc-8979-f7c70e125fe3
+      isPrivate: false
+      isPrivateUrl: true
+      mock_output:
+        enabled: false
+      skip: false
+      retry: {}
+  output_schema: '{}'
+  section: Wrike
+root: true
